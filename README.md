@@ -14,6 +14,10 @@ A prominent paradigm for graph neural networks is based on the message passing f
 
 ![image](https://user-images.githubusercontent.com/77163765/205882230-a29ee9a7-a4bf-4f34-8dcc-e5d8530bdb5b.png)
 
+## Requirements
+- ogb>=1.3.3
+- torch>=1.10.0
+- torch-geometric>=2.0.4
 
 ## Reference
 
