@@ -21,7 +21,7 @@ def main():
 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='ogbn-arxiv')  
+    parser.add_argument('--dataset', type=str, default='Photo')  
     parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--hidden_channels', type=int, default=64) 
     parser.add_argument('--epochs', type=int, default=500)
