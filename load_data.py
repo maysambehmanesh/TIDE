@@ -37,6 +37,8 @@ def get_dataset(ds_name):
 
     elif ds_name == 'CoauthorCS':
         dataset = Coauthor(path, 'CS', transform=T.NormalizeFeatures())
+    elif ds_name == 'ogbn-arxiv':
+        dataset = PygNodePropPredDataset(name=ds_name, root=path, transform=T.ToSparseTensor())
     else:
         raise Exception('Unknown dataset.')
 
@@ -151,7 +153,39 @@ def split_data(dataset):
     return dataset
 
 
+def split_data_arxive(dataset):
+    num_nodes = dataset.data.num_nodes
+    
+    split_idx = dataset.get_idx_split()
+    ei = to_undirected(dataset.data.edge_index)
+    data = Data(
+        x=dataset.data.x,
+        edge_index=ei,
+        y=dataset.data.y,
+        train_mask=split_idx['train'],
+        test_mask=split_idx['test'],
+        val_mask=split_idx['valid']
+        )
+    
+    dataset.data = data
+    
+    
+    train_mask= np.zeros(num_nodes)
+    val_mask= np.zeros(num_nodes)
+    test_mask= np.zeros(num_nodes)
+    
+    
+    train_mask[data.train_mask]=1
+    val_mask[data.val_mask]=1
+    test_mask[data.test_mask]=1
+    
+    dataset.data.train_mask=torch.tensor(train_mask, dtype=bool)
+    dataset.data.val_mask=torch.tensor(val_mask, dtype=bool)
+    dataset.data.test_mask=torch.tensor(test_mask, dtype=bool)
+    dataset.data.y=dataset.data.y.squeeze(-1)
 
+    
+    return dataset
 
     
 

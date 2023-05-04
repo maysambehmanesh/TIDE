@@ -45,6 +45,14 @@ class Time_derivative_diffusion(nn.Module):
         
         nn.init.constant_(self.diffusion_time, 0.0)
         
+        self.alpha = nn.Parameter(torch.tensor(0.0))
+        self.betta = nn.Parameter(torch.tensor(0.0))
+    
+    def reset_parameters(self):
+        self.Conv_layer.reset_parameters()            
+        nn.init.constant_(self.diffusion_time, 0.0)
+        self.alpha = nn.Parameter(torch.tensor(0.0))
+        self.betta = nn.Parameter(torch.tensor(0.0))
         
         
         
@@ -73,15 +81,19 @@ class Time_derivative_diffusion(nn.Module):
             diffusion_coefs = torch.exp(-evals.unsqueeze(-1) * time.unsqueeze(0))
             
             x_diffuse_spec = diffusion_coefs * x_spec
-  
 
-            # derivative -> 
-            x_diffuse = torch.matmul(evecs, x_diffuse_spec)
+            if 1: # with res
+                x_diffuse_spec = x_diffuse_spec -(self.alpha)*x_spec
+                x_diffuse = torch.matmul(evecs, x_diffuse_spec)
+                x_diffuse = x_diffuse + (self.betta)*x
 
-                        
-            x_diffuse = F.dropout(x_diffuse, p=0.5, training=self.training)
-                        
-            x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()   # with L
+            else:
+                # derivative -> 
+                x_diffuse = torch.matmul(evecs, x_diffuse_spec)
+
+            x_diffuse = self.Conv_layer(x_diffuse, edge_index, edge_weight=None).relu()    # with A
+
+            # x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()   # with L
                         
 
                       
@@ -148,54 +160,6 @@ class MiniMLP(nn.Sequential):
 
 
 
-class LaplacianFeatures(nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, gradient_matrix, learnable, device) -> None:
-        super().__init__()
-        self.fc1 = nn.Linear(in_dim, hidden_dim, bias = True)
-        # self.fc2 = nn.Linear(hidden_dim, out_dim, bias = True)
-        self.learnable = learnable
-        if learnable:
-            self.Gradient_X = nn.Parameter(gradient_matrix)
-            self.mask = self.Gradient_X == 0
-        else:
-            self.Gradient_X = gradient_matrix
-                
-                
-        ## normalize
-        if torch.is_tensor(gradient_matrix):
-            norm_G = self.Gradient_X.sum(dim=1)
-            norm_m = torch.diag(1 / torch.sqrt(norm_G))
-            self.Gradient_X.data = norm_m @ self.Gradient_X.data @ norm_m
-       
-
-        else:  # for arxiv datasets
-            norm_G = self.Gradient_X.sum(dim=1)
-            
-            # sparse tensor
-            num_node = torch.numel(norm_G)
-            row = torch.tensor(np.arange(0,num_node)).type(torch.long)
-            col = row
-            value= (1 / torch.sqrt(norm_G)).to('cpu')
-    
-            
-            from torch_sparse import SparseTensor
-            norm_m = SparseTensor(row=row,col=col,value=value,
-                                  sparse_sizes=(num_node,num_node)).to(device)
-            self.Gradient_X.data = norm_m @ self.Gradient_X @ norm_m
-      
-
-        
-        self.Gradient_Y = None #torch.ones_like(self.Gradient_X)
-    
-    def forward(self, x):
-        if self.learnable:
-            self.Gradient_X.data[self.mask] = 0
-        x = self.fc1(x)
-        
-        x = self.Gradient_X @ x
-
-        return x
-
     
 class TIDE_block(nn.Module):
     """
@@ -207,9 +171,7 @@ class TIDE_block(nn.Module):
                  diffusion_method='spectral',
                  single_t = False,
                  use_gdc = [],
-                 with_Lap_feat=True, 
                  with_MLP=True,
-                 grad_matrix=None,
                  device='cpu'):
         super(TIDE_block, self).__init__()
 
@@ -222,7 +184,6 @@ class TIDE_block(nn.Module):
         self.single_t = single_t
         self.use_gdc = use_gdc
         self.dropout = dropout
-        self.with_Lap_feat = with_Lap_feat
         self.with_MLP = with_MLP
         self.num_nodes = num_nodes
         self.n_block = n_block
@@ -231,19 +192,12 @@ class TIDE_block(nn.Module):
 
         self.diff_derivative = Time_derivative_diffusion(self.n_block, self.use_gdc, self.k, self.C_width, self.num_nodes, self.single_t, method=diffusion_method)      
         
-        # With laplacian features
-        if self.with_Lap_feat:
-            self.lap_layer1 = LaplacianFeatures(self.C_in, self.C_width, self.C_width, grad_matrix, False, self.device)
-            self.MLP_C += self.C_width
-            self.theta = nn.Parameter(torch.tensor(0.5))
-            self.lap_layer2 = GCN_diff(self.use_gdc, self.C_width, self.C_width)
-        
 
         # With MLP
         if self.with_MLP:
             self.mlp = MiniMLP([self.MLP_C] + self.mlp_hidden_dims + [self.C_width], dropout=self.dropout)
       
-    def forward(self, epoch, x_in, x_original, edge_index, mass, L, evals, evecs, gradX, gradY, x0):
+    def forward(self, epoch, x_in, x_original, edge_index, mass, L, evals, evecs, x0):
 
         # Manage dimensions
         if x_in.shape[-1] != self.C_width:
@@ -254,16 +208,9 @@ class TIDE_block(nn.Module):
         x_diffuse= x_diff_derivative
             
 
-        if self.with_Lap_feat:
-            x_grad_features = self.lap_layer1(x_original)
-            x_grad_features = self.lap_layer2(x_grad_features,edge_index)  
-            feature_combined = torch.cat(( x_in ,x_diffuse, x_grad_features.view(-1,self.C_width)), dim=-1)
-            x_diffuse = self.theta * x_diffuse + (1- self.theta) * x_grad_features.view(-1,self.C_width)
-            
-        else:
-            if self.with_MLP:
-                # Stack inputs to mlp
-                feature_combined = torch.cat((x_in, x_diffuse), dim=-1)
+        if self.with_MLP:
+            # Stack inputs to mlp
+            feature_combined = torch.cat((x_in, x_diffuse), dim=-1)
 
         
         # Apply the mlp
@@ -279,8 +226,8 @@ class TIDE_block(nn.Module):
 class TIDE_net(nn.Module):
 
     def __init__(self,k, C_in, C_out, C_width=128, N_block=4, single_t=0, use_gdc=[], num_nodes=[], 
-                 last_activation=None, mlp_hidden_dims=None, dropout=True, with_Lap_feat=True, with_MLP=True, 
-                 grad_matrix=[], diffusion_method='spectral', device='cpu'):   
+                 last_activation=None, mlp_hidden_dims=None, dropout=True, with_MLP=True, 
+                 diffusion_method='spectral', device='cpu'):   
         super(TIDE_net, self).__init__()
 
         # Basic parameters
@@ -292,7 +239,6 @@ class TIDE_net(nn.Module):
         self.num_nodes = num_nodes
         self.single_t = single_t
         self.use_gdc = use_gdc
-        self.grad_matrix = grad_matrix
         self.device = device
    
 
@@ -309,8 +255,6 @@ class TIDE_net(nn.Module):
         self.diffusion_method = diffusion_method
         if diffusion_method not in ['spectral', 'implicit_dense']: raise ValueError("invalid setting for diffusion_method")
 
-        # Laplacian features
-        self.with_Lap_feat = with_Lap_feat
         
         #MLP
         self.with_MLP = with_MLP
@@ -336,16 +280,14 @@ class TIDE_net(nn.Module):
                                             diffusion_method = diffusion_method,
                                             single_t = single_t,
                                             use_gdc = use_gdc,
-                                            with_Lap_feat = with_Lap_feat, 
                                             with_MLP = with_MLP,
-                                            grad_matrix = grad_matrix,
                                             device = self.device)
 
             self.blocks.append(block)
             self.add_module("block_"+str(i_block), self.blocks[-1])
 
     
-    def forward(self, epoch, x_in, edge_index, mass, L=None, evals=None, evecs=None, gradX=None, gradY=None, edges=None, faces=None):
+    def forward(self, epoch, x_in, edge_index, mass, L=None, evals=None, evecs=None, edges=None, faces=None):
         # Apply the first linear layer
         x = self.first_lin(x_in)
       
@@ -353,7 +295,7 @@ class TIDE_net(nn.Module):
         # Apply each of the blocks
         for b in self.blocks:
             # x = self.med_linear(x)
-            x = b(epoch, x, x_in, edge_index, mass, L, evals, evecs, gradX, gradY, x_in)
+            x = b(epoch, x, x_in, edge_index, mass, L, evals, evecs, x_in)
 
         # Apply the last linear layer        
         x_out = self.last_lin(x)
