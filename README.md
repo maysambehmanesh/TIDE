@@ -1,6 +1,6 @@
 # TIDE: Time Derivative Diffusion for Deep Learning on Graphs
 
-TIDE is described in ["TIDE: Time Derivative Diffusion for Deep Learning on Graphs"](https://arxiv.org/pdf/2212.02483.pdf), by
+TIDE is described in ["TIDE: Time Derivative Diffusion for Deep Learning on Graphs"](https://arxiv.org/pdf/2212.02483v2.pdf), by
 
 [Maysam Behmanesh](https://maysambehmanesh.github.io/),
 [Maximilian Krahn](https://scholar.google.com/citations?user=Dg5q7-QAAAAJ),
