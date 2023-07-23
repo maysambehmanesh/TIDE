@@ -37,8 +37,6 @@ A prominent paradigm for graph neural networks is based on the message passing f
   pdf = 	 {https://proceedings.mlr.press/v202/behmanesh23a/behmanesh23a.pdf},
   url = 	 {https://proceedings.mlr.press/v202/behmanesh23a.html},
 }
-
-
 ```
 
 ## Reference
