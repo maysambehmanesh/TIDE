@@ -23,15 +23,19 @@ A prominent paradigm for graph neural networks is based on the message passing f
 ## Citation
 
 ```
-@misc{https://doi.org/10.48550/arxiv.2212.02483,
-  doi = {10.48550/ARXIV.2212.02483},
-  url = {https://arxiv.org/abs/2212.02483},
-  author = {Krahn, Maximilian and Behmanesh, Maysam and Ovsjanikov, Maks},
-  keywords = {Machine Learning (cs.LG), Computer Vision and Pattern Recognition (cs.CV), Social and Information Networks (cs.SI), FOS: Computer and information sciences, FOS: Computer and information sciences},
-   title = {TIDE: Time Derivative Diffusion for Deep Learning on Graphs},
-  publisher = {arXiv},
-  year = {2022},
-  copyright = {arXiv.org perpetual, non-exclusive license}
+@InProceedings{pmlr-v202-behmanesh23a,
+  title = 	 {{TIDE}: Time Derivative Diffusion for Deep Learning on Graphs},
+  author =       {Behmanesh, Maysam and Krahn, Maximilian and Ovsjanikov, Maks},
+  booktitle = 	 {Proceedings of the 40th International Conference on Machine Learning},
+  pages = 	 {2015--2030},
+  year = 	 {2023},
+  editor = 	 {Krause, Andreas and Brunskill, Emma and Cho, Kyunghyun and Engelhardt, Barbara and Sabato, Sivan and Scarlett, Jonathan},
+  volume = 	 {202},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {23--29 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v202/behmanesh23a/behmanesh23a.pdf},
+  url = 	 {https://proceedings.mlr.press/v202/behmanesh23a.html},
 }
 
 
