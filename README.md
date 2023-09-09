@@ -2,8 +2,8 @@
 
 TIDE is described in ["TIDE: Time Derivative Diffusion for Deep Learning on Graphs"](https://arxiv.org/pdf/2212.02483v2.pdf), by
 
-[Maysam Behmanesh](https://maysambehmanesh.github.io/),
-[Maximilian Krahn](https://scholar.google.com/citations?user=Dg5q7-QAAAAJ),
+[Maysam Behmanesh*](https://maysambehmanesh.github.io/),
+[Maximilian Krahn*](https://scholar.google.com/citations?user=Dg5q7-QAAAAJ),
 [Maks Ovsjanikov](https://www.lix.polytechnique.fr/~maks/)
 
 
@@ -11,8 +11,8 @@ Abstract
 
 A prominent paradigm for graph neural networks is based on the message-passing framework. In this framework, information communication is realized only between neighboring nodes. The challenge of approaches that use this paradigm is to ensure efficient and accurate long-distance communication between nodes, as deep convolutional networks are prone to over-smoothing. In this paper, we present a novel method based on time derivative graph diffusion (TIDE), with a learnable time parameter. Our approach allows us to adapt the spatial extent of diffusion across different tasks and network channels, thus enabling medium and long-distance communication efficiently. Furthermore, we show that our architecture directly enables local message-passing and thus inherits from the expressive power of local message-passing approaches. We show that on widely used graph benchmarks we achieve comparable performance and on a synthetic mesh dataset we outperform state-of-the-art methods like GCN or GRAND by a significant margin.
 
+![TIDE-framework](https://github.com/maysambehmanesh/TIDE/assets/77163765/a1bb8f6a-9e29-4388-9c09-00c11d186ea3)
 
-![Screenshot from 2023-05-04 18-34-26](https://user-images.githubusercontent.com/77163765/236268178-bd27bf21-db1f-4195-a097-20a30c18a7e8.png)
 
 
 ## Requirements
