@@ -15,6 +15,7 @@ A prominent paradigm for graph neural networks is based on the message-passing f
 
 ## 
 Please take note that Equation (10) has been simplified similarly to the following equation, as you can find in the implementation.
+
 ![eq10](https://github.com/maysambehmanesh/TIDE/assets/77163765/c0e6904c-e4c6-466a-9705-c448acfc5c72)
 
 
