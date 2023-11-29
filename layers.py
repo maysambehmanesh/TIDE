@@ -10,6 +10,8 @@ from torch_geometric.nn import GCNConv
 
 
 
+
+
 class GCN_diff(torch.nn.Module):
     def __init__(self, use_gdc, in_channels,hidden_channels):
         super().__init__()
@@ -66,7 +68,6 @@ class Time_derivative_diffusion(nn.Module):
 
         if self.method == 'spectral':
               
-
             # Transform to spectral
             x_spec = torch.matmul(torch.transpose(evecs,1,0),x)
             
@@ -82,19 +83,14 @@ class Time_derivative_diffusion(nn.Module):
             
             x_diffuse_spec = diffusion_coefs * x_spec
 
-            if 1: # with res
-                x_diffuse_spec = x_diffuse_spec -(self.alpha)*x_spec
-                x_diffuse = torch.matmul(evecs, x_diffuse_spec)
-                x_diffuse = x_diffuse + (self.betta)*x
+            x_diffuse_spec = x_diffuse_spec -(self.alpha)*x_spec
+            x_diffuse = torch.matmul(evecs, x_diffuse_spec)
+            x_diffuse = x_diffuse + (self.betta)*x
 
-            else:
-                # derivative -> 
-                x_diffuse = torch.matmul(evecs, x_diffuse_spec)
-
-            x_diffuse = self.Conv_layer(x_diffuse, edge_index, edge_weight=None).relu()    # with A
-
-            # x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()   # with L
-                        
+            # x_diffuse = self.Conv_layer(x_diffuse, edge_index, edge_weight=None).relu()    # with A
+            
+            
+            x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()   # with L
 
                       
         elif self.method == 'implicit_dense':
