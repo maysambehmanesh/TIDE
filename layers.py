@@ -86,11 +86,8 @@ class Time_derivative_diffusion(nn.Module):
             x_diffuse_spec = x_diffuse_spec -(self.alpha)*x_spec
             x_diffuse = torch.matmul(evecs, x_diffuse_spec)
             x_diffuse = x_diffuse + (self.betta)*x
-
-            # x_diffuse = self.Conv_layer(x_diffuse, edge_index, edge_weight=None).relu()    # with A
-            
-            
-            x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()   # with L
+           
+            x_diffuse = self.Conv_layer(x_diffuse, L._indices(), edge_weight=L._values()).relu()  
 
                       
         elif self.method == 'implicit_dense':
